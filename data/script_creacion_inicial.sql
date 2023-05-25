@@ -1,6 +1,3 @@
-
--- //TODO: AGREGAR IDENTITY EN TODAS LAS PKS QUE SEAN AUTOINCREMENTALES
-
 --Creación de cada tabla de nuestro modelo realizado (con la sentencia IF NOT EXISTS verificamos que no estuviera ya creada la tabla)
 BEGIN TRANSACTION
 -- Utilizamos la base de datos GD2C2023 que contiene la tabla Maestra
@@ -382,8 +379,10 @@ CREATE PROCEDURE migrar_tipo_paquetes
 				PAQUETE_LARGO_MAX,
 				PAQUETE_PESO_MAX,
 				PAQUETE_TIPO_PRECIO
-			FROM gd_esquema.Maestra
-			WHERE PAQUETE_TIPO IS NOT NULL
+			FROM 
+				gd_esquema.Maestra
+			WHERE 
+				PAQUETE_TIPO IS NOT NULL
 				AND PAQUETE_ALTO_MAX IS NOT NULL
 				AND PAQUETE_ANCHO_MAX IS NOT NULL
 				AND PAQUETE_LARGO_MAX IS NOT NULL
@@ -392,7 +391,187 @@ CREATE PROCEDURE migrar_tipo_paquetes
 		END
 GO
 
-EXEC migrar_tipo_paquetes
-COMMIT
+--Estado envio mensajeria
+IF EXISTS(SELECT [name] FROM sys.procedures WHERE [name] = 'migrar_estado_envio_mensajeria')
+DROP PROCEDURE migrar_estado_envio_mensajeria
+GO
+CREATE PROCEDURE migrar_estado_envio_mensajeria
+	AS
+		BEGIN
+		INSERT INTO BASE_DE_GATOS_2.ESTADO_ENVIO_MENSAJERIA(ESTADO_EM_NOMBRE)
+			SELECT DISTINCT
+				ENVIO_MENSAJERIA_ESTADO
+			FROM 
+				gd_esquema.Maestra
+			WHERE 
+				ENVIO_MENSAJERIA_ESTADO IS NOT NULL
+		END
+GO
 
+-- Horario Dias
+IF EXISTS(SELECT [name] FROM sys.procedures WHERE [name] = 'migrar_horario_dias')
+DROP PROCEDURE migrar_horario_dias
+GO
+CREATE PROCEDURE migrar_horario_dias
+	AS
+		BEGIN
+		INSERT INTO BASE_DE_GATOS_2.HORARIO_DIAS(HORARIO_LOCAL_DIA)
+			SELECT DISTINCT
+				HORARIO_LOCAL_DIA
+			FROM 
+				gd_esquema.Maestra
+			WHERE 
+				HORARIO_LOCAL_DIA IS NOT NULL
+		END
+GO
+
+--Local tipos
+IF EXISTS(SELECT [name] FROM sys.procedures WHERE [name] = 'migrar_local_tipos')
+DROP PROCEDURE migrar_local_tipos
+GO
+CREATE PROCEDURE migrar_local_tipos
+	AS
+		BEGIN
+		INSERT INTO BASE_DE_GATOS_2.LOCAL_TIPOS(LOCAL_TIPO_NOMBRE)
+			SELECT DISTINCT
+				LOCAL_TIPO
+			FROM 
+				gd_esquema.Maestra
+			WHERE 
+				LOCAL_TIPO IS NOT NULL
+		END
+GO
+
+--Local categorias
+IF EXISTS(SELECT [name] FROM sys.procedures WHERE [name] = 'migrar_local_categorias')
+DROP PROCEDURE migrar_local_categorias
+GO
+CREATE PROCEDURE migrar_local_categorias
+	AS
+		BEGIN
+		INSERT INTO BASE_DE_GATOS_2.LOCAL_CATEGORIAS(LOCAL_CATEGORIA_NOMBRE, LOCAL_TIPO_ID)
+			SELECT DISTINCT
+				m.LOCAL_TIPO,
+				lt.LOCAL_TIPO_ID
+			FROM 
+				gd_esquema.Maestra m
+					JOIN BASE_DE_GATOS_2.LOCAL_TIPOS lt ON m.LOCAL_TIPO = lt.LOCAL_TIPO_NOMBRE
+			WHERE 
+				m.LOCAL_TIPO IS NOT NULL
+		END
+GO
+
+--Locales
+IF EXISTS(SELECT [name] FROM sys.procedures WHERE [name] = 'migrar_locales')
+DROP PROCEDURE migrar_locales
+GO
+CREATE PROCEDURE migrar_locales
+	AS
+		BEGIN
+		INSERT INTO BASE_DE_GATOS_2.LOCALES(LOCAL_NOMBRE, LOCAL_DESCRIPCION, LOCAL_DIRECCION, LOCAL_CATEGORIA_ID, LOCAL_LOCALIDAD)
+			SELECT DISTINCT
+				m.LOCAL_NOMBRE,
+				m.LOCAL_DESCRIPCION,
+				m.LOCAL_DIRECCION,
+				lc.LOCAL_CATEGORIA_ID,
+				m.LOCAL_LOCALIDAD
+			FROM 
+				gd_esquema.Maestra m
+					JOIN BASE_DE_GATOS_2.LOCAL_CATEGORIAS lc ON m.LOCAL_TIPO = lc.LOCAL_CATEGORIA_NOMBRE
+			WHERE 
+				m.LOCAL_NOMBRE IS NOT NULL AND
+				m.LOCAL_DESCRIPCION IS NOT NULL AND
+				m.LOCAL_DIRECCION IS NOT NULL AND
+				m.LOCAL_LOCALIDAD IS NOT NULL AND
+				m.LOCAL_TIPO IS NOT NULL 
+		END
+GO
+
+-- Horarios
+IF EXISTS(SELECT [name] FROM sys.procedures WHERE [name] = 'migrar_horarios')
+DROP PROCEDURE migrar_horarios
+GO
+CREATE PROCEDURE migrar_horarios
+	AS
+		BEGIN
+		INSERT INTO BASE_DE_GATOS_2.HORARIOS(HORARIO_DIA_ID, HORARIO_LOCAL_HORA_APERTURA, HORARIO_LOCAL_HORA_CIERRE, LOCAL_ID)
+			SELECT DISTINCT
+				hd.HORARIO_DIA_ID,
+				m.HORARIO_LOCAL_HORA_APERTURA,
+				m.HORARIO_LOCAL_HORA_CIERRE,
+				l.LOCAL_ID
+			FROM 
+				BASE_DE_GATOS_2.HORARIO_DIAS hd
+					JOIN gd_esquema.Maestra m ON
+						hd.HORARIO_LOCAL_DIA = m.HORARIO_LOCAL_DIA
+					JOIN BASE_DE_GATOS_2.LOCALES l ON
+						l.LOCAL_NOMBRE = m.LOCAL_NOMBRE
+			WHERE
+				hd.HORARIO_DIA_ID IS NOT NULL
+				AND m.HORARIO_LOCAL_HORA_APERTURA IS NOT NULL
+				AND m.HORARIO_LOCAL_HORA_CIERRE IS NOT NULL
+				AND l.LOCAL_NOMBRE IS NOT NULL
+		END
+GO
+
+--Productos
+IF EXISTS(SELECT [name] FROM sys.procedures WHERE [name] = 'migrar_productos')
+DROP PROCEDURE migrar_productos
+GO
+CREATE PROCEDURE migrar_productos
+	AS
+		BEGIN
+		INSERT INTO BASE_DE_GATOS_2.PRODUCTOS(PRODUCTO_CODIGO, PRODUCTO_NOMBRE, PRODUCTO_DESCRIPCION)
+			SELECT DISTINCT
+				PRODUCTO_LOCAL_CODIGO,
+				PRODUCTO_LOCAL_NOMBRE,
+				PRODUCTO_LOCAL_DESCRIPCION
+			FROM 
+				gd_esquema.Maestra
+			WHERE 
+				PRODUCTO_LOCAL_CODIGO IS NOT NULL AND
+				PRODUCTO_LOCAL_NOMBRE IS NOT NULL AND
+				PRODUCTO_LOCAL_DESCRIPCION IS NOT NULL
+		END
+GO
+
+IF EXISTS(SELECT [name] FROM sys.procedures WHERE [name] = 'migrar_local_producto')
+DROP PROCEDURE migrar_local_producto
+GO
+CREATE PROCEDURE migrar_local_producto
+	AS
+		BEGIN
+		INSERT INTO BASE_DE_GATOS_2.LOCAL_PRODUCTO(LP_LOCAL_ID, LP_PRODUCTO_ID, LP_PRODUCTO_PRECIO)
+			SELECT DISTINCT
+				l.LOCAL_ID,
+				p.PRODUCTO_ID,
+				m.PRODUCTO_LOCAL_PRECIO
+			FROM 
+				gd_esquema.Maestra m
+					JOIN BASE_DE_GATOS_2.PRODUCTOS p ON 
+						m.PRODUCTO_LOCAL_CODIGO = p.PRODUCTO_CODIGO
+						AND m.PRODUCTO_LOCAL_NOMBRE = p.PRODUCTO_NOMBRE
+						AND m.PRODUCTO_LOCAL_DESCRIPCION = p.PRODUCTO_DESCRIPCION
+					JOIN BASE_DE_GATOS_2.LOCALES l ON
+						l.LOCAL_NOMBRE = m.LOCAL_NOMBRE
+						AND l.LOCAL_DESCRIPCION = m.LOCAL_DESCRIPCION
+						AND l.LOCAL_DIRECCION = m.LOCAL_DIRECCION
+						AND l.LOCAL_LOCALIDAD = m.LOCAL_LOCALIDAD
+
+		END
+GO
+
+
+-- Executes
+EXEC migrar_tipo_paquetes
+EXEC migrar_estado_envio_mensajeria
+EXEC migrar_local_tipos
+EXEC migrar_local_categorias
+EXEC migrar_locales
+EXEC migrar_horario_dias
+EXEC migrar_horarios
+EXEC migrar_productos
+EXEC migrar_local_producto
+
+COMMIT
 

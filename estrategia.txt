@@ -1,0 +1,9 @@
+1) Al no tener datos de la categoría de cada local en la tabla maestra, decidimos colocarle como categoria a cada local el mismo valor que tiene LOCAL_TIPO, porque de otra manera, perderiamos el dato del tipo de local desde la tabla LOCALES
+
+
+
+
+ //TODO: 
+    - Agregar una tabla donde esten guardadas todas las categorias posibles de un tipo de local para usarlo en un trigger al INSERT y al UPDATE
+	    Ej: Para el tipo MERCADO las categorias posibles serian [minimercado, kiosco, supermercado]
+		    Para el tipo RESTAURANTE las categorias posibles serian [parrilla, heladeria, comidas rapidas]
