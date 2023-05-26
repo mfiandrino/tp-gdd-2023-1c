@@ -800,7 +800,8 @@ CREATE PROCEDURE migrar_direcciones
 GO
 
 -- Direccion usuario
-DROP PROCEDURE IF EXISTS migrar_direccion_usuario
+IF EXISTS(SELECT [name] FROM sys.procedures WHERE [name] = 'migrar_direccion_usuario')
+DROP PROCEDURE migrar_direccion_usuario
 GO
 CREATE PROCEDURE migrar_direccion_usuario
 	AS
