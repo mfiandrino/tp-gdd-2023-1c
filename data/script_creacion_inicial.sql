@@ -416,7 +416,8 @@ CONSTRAINT FK_MEDIO_DE_PAGO_ENVIO_MENSAJERIA FOREIGN KEY (EM_MEDIO_DE_PAGO) REFE
 
 
 --Tipo paquetes
-DROP PROCEDURE IF EXISTS migrar_tipo_paquetes
+IF EXISTS(SELECT [name] FROM sys.procedures WHERE [name] = 'migrar_tipo_paquetes')
+DROP PROCEDURE migrar_tipo_paquetes
 GO
 CREATE PROCEDURE migrar_tipo_paquetes
 	AS
@@ -442,7 +443,8 @@ CREATE PROCEDURE migrar_tipo_paquetes
 GO
 
 --Estado envio mensajeria
-DROP PROCEDURE IF EXISTS migrar_estado_envio_mensajeria
+IF EXISTS(SELECT [name] FROM sys.procedures WHERE [name] = 'migrar_estado_envio_mensajeria')
+DROP PROCEDURE migrar_estado_envio_mensajeria
 GO
 CREATE PROCEDURE migrar_estado_envio_mensajeria
 	AS
@@ -458,7 +460,8 @@ CREATE PROCEDURE migrar_estado_envio_mensajeria
 GO
 
 -- Horario Dias
-DROP PROCEDURE IF EXISTS migrar_horario_dias
+IF EXISTS(SELECT [name] FROM sys.procedures WHERE [name] = 'migrar_horario_dias')
+DROP PROCEDURE migrar_horario_dias
 GO
 CREATE PROCEDURE migrar_horario_dias
 	AS
@@ -474,7 +477,8 @@ CREATE PROCEDURE migrar_horario_dias
 GO
 
 --Local tipos
-DROP PROCEDURE IF EXISTS migrar_local_tipos
+IF EXISTS(SELECT [name] FROM sys.procedures WHERE [name] = 'migrar_local_tipos')
+DROP PROCEDURE migrar_local_tipos
 GO
 CREATE PROCEDURE migrar_local_tipos
 	AS
@@ -490,7 +494,8 @@ CREATE PROCEDURE migrar_local_tipos
 GO
 
 --Local categorias
-DROP PROCEDURE IF EXISTS migrar_local_categorias
+IF EXISTS(SELECT [name] FROM sys.procedures WHERE [name] = 'migrar_local_categorias')
+DROP PROCEDURE migrar_local_categorias
 GO
 CREATE PROCEDURE migrar_local_categorias
 	AS
@@ -509,7 +514,8 @@ GO
 
 
 --Locales
-DROP PROCEDURE IF EXISTS migrar_locales
+IF EXISTS(SELECT [name] FROM sys.procedures WHERE [name] = 'migrar_locales')
+DROP PROCEDURE migrar_locales
 GO
 CREATE PROCEDURE migrar_locales
 	AS
@@ -536,7 +542,8 @@ CREATE PROCEDURE migrar_locales
 GO
 
 -- Horarios
-DROP PROCEDURE IF EXISTS migrar_horarios
+IF EXISTS(SELECT [name] FROM sys.procedures WHERE [name] = 'migrar_horarios')
+DROP PROCEDURE migrar_horarios
 GO
 CREATE PROCEDURE migrar_horarios
 	AS
@@ -562,7 +569,8 @@ CREATE PROCEDURE migrar_horarios
 GO
 
 --Productos
-DROP PROCEDURE IF EXISTS migrar_productos
+IF EXISTS(SELECT [name] FROM sys.procedures WHERE [name] = 'migrar_productos')
+DROP PROCEDURE migrar_productos
 GO
 CREATE PROCEDURE migrar_productos
 	AS
@@ -581,7 +589,8 @@ CREATE PROCEDURE migrar_productos
 		END
 GO
 
-DROP PROCEDURE IF EXISTS migrar_local_producto
+IF EXISTS(SELECT [name] FROM sys.procedures WHERE [name] = 'migrar_local_producto')
+DROP PROCEDURE migrar_local_producto
 GO
 CREATE PROCEDURE migrar_local_producto
 	AS
@@ -604,7 +613,8 @@ CREATE PROCEDURE migrar_local_producto
 GO
 
 --Estado pedido
-DROP PROCEDURE IF EXISTS migrar_estado_pedido
+IF EXISTS(SELECT [name] FROM sys.procedures WHERE [name] = 'migrar_estado_pedido')
+DROP PROCEDURE migrar_estado_pedido
 GO
 CREATE PROCEDURE migrar_estado_pedido
 	AS
@@ -620,7 +630,8 @@ CREATE PROCEDURE migrar_estado_pedido
 GO
 
 --Usuarios
-DROP PROCEDURE IF EXISTS migrar_usuarios
+IF EXISTS(SELECT [name] FROM sys.procedures WHERE [name] = 'migrar_usuarios')
+DROP PROCEDURE migrar_usuarios
 GO
 CREATE PROCEDURE migrar_usuarios
 	AS
@@ -648,7 +659,8 @@ CREATE PROCEDURE migrar_usuarios
 GO
 
 --Provincias
-DROP PROCEDURE IF EXISTS migrar_provincias
+IF EXISTS(SELECT [name] FROM sys.procedures WHERE [name] = 'migrar_provincias')
+DROP PROCEDURE migrar_provincias
 GO
 CREATE PROCEDURE migrar_provincias
 	AS
@@ -678,7 +690,8 @@ GO
 
 /*
 -- Local Producto Pedido SOLO SE PUEDE MIGRAR UNA VEZ MIGRADA LA TABLA PEDIDOS
-DROP PROCEDURE IF EXISTS migrar_local_producto_pedido
+IF EXISTS(SELECT [name] FROM sys.procedures WHERE [name] = 'migrar_local_producto_pedido')
+DROP PROCEDURE migrar_local_producto_pedido
 GO
 CREATE PROCEDURE migrar_local_producto_pedido
 	AS
@@ -715,7 +728,8 @@ GO
 */
 
 -- Localidades
-DROP PROCEDURE IF EXISTS migrar_localidades
+IF EXISTS(SELECT [name] FROM sys.procedures WHERE [name] = 'migrar_localidades')
+DROP PROCEDURE migrar_localidades
 GO
 CREATE PROCEDURE migrar_localidades
 	AS
@@ -746,7 +760,8 @@ CREATE PROCEDURE migrar_localidades
 GO
 
 -- Direcciones
-DROP PROCEDURE IF EXISTS migrar_direcciones
+IF EXISTS(SELECT [name] FROM sys.procedures WHERE [name] = 'migrar_direcciones')
+DROP PROCEDURE migrar_direcciones
 GO
 CREATE PROCEDURE migrar_direcciones
 	AS
