@@ -22,8 +22,8 @@ CREATE TABLE BASE_DE_GATOS_2.ENVIO_MENSAJERIA (
 	EM_PROPINA decimal(18,2) not null,
 	EM_TOTAL decimal(18,2) not null,
 	EM_OBSERVACION nvarchar(255) not null,
-	EM_FECHA datetime2(3) not null,
-	EM_FECHA_ENTREGA datetime2(3) not null,
+	EM_FECHA datetime not null,
+	EM_FECHA_ENTREGA datetime not null,
 	EM_TIEMPO_ESTIMADO decimal(18,2) not null,
 	EM_CALIFICACION decimal(18, 0) not null,
 	-- FKs
@@ -173,8 +173,8 @@ CREATE TABLE BASE_DE_GATOS_2.PEDIDOS (
 	PEDIDO_TOTAL_CUPONES decimal(18,2) not null,
 	PEDIDO_TOTAL_SERVICIO decimal(18,2) not null,
 	PEDIDO_OBSERV nvarchar(255) not null,
-	PEDIDO_FECHA_ENTREGA datetime2(3) not null,
-	PEDIDO_FECHA datetime2(3) not null,
+	PEDIDO_FECHA_ENTREGA datetime not null,
+	PEDIDO_FECHA datetime not null,
 	PEDIDO_TIEMPO_ESTIMADO_ENTREGA decimal(18,2) not null,
 	PEDIDO_CALIFICACION decimal(18, 0) not null,
   -- FKs
@@ -228,9 +228,9 @@ CREATE TABLE BASE_DE_GATOS_2.MARCAS_TARJETA (
 IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'RECLAMOS')
 CREATE TABLE BASE_DE_GATOS_2.RECLAMOS (
   RECLAMO_NUMERO DECIMAL(18, 0) PRIMARY KEY,
-  RECLAMO_FECHA datetime2(3) not null,
+  RECLAMO_FECHA datetime not null,
   RECLAMO_DESCRIPCION nvarchar(255) not null,
-  RECLAMO_FECHA_SOLUCION datetime2(3) not null,
+  RECLAMO_FECHA_SOLUCION datetime not null,
   RECLAMO_CALIFICACION decimal(18, 0) not null,
   -- FKs
   RECLAMO_SOLUCION decimal(18, 0) not null,
@@ -302,8 +302,8 @@ IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'CUPONES')
 CREATE TABLE BASE_DE_GATOS_2.CUPONES (
     CUPON_NUMERO DECIMAL(18, 0) PRIMARY KEY,
     CUPON_MONTO DECIMAL(18, 2),
-    CUPON_FECHA_ALTA DATETIME2(3),
-    CUPON_FECHA_VENCIMIENTO DATETIME2(3),
+    CUPON_FECHA_ALTA DATETIME,
+    CUPON_FECHA_VENCIMIENTO DATETIME,
     USUARIO_ID DECIMAL(18, 0)
 );
 
@@ -823,8 +823,8 @@ CREATE PROCEDURE migrar_pedidos
 			PEDIDO_TOTAL_CUPONES,
 			PEDIDO_TOTAL_SERVICIO,
 			PEDIDO_OBSERV,
-			PEDIDO_FECHA,
 			PEDIDO_FECHA_ENTREGA,
+			PEDIDO_FECHA,
 			PEDIDO_TIEMPO_ESTIMADO_ENTREGA,
 			PEDIDO_CALIFICACION,
 			PEDIDO_ESTADO,
@@ -840,8 +840,8 @@ CREATE PROCEDURE migrar_pedidos
 				m.PEDIDO_TOTAL_CUPONES,
 				m.PEDIDO_TOTAL_SERVICIO,
 				m.PEDIDO_OBSERV,
-				m.PEDIDO_FECHA,
 				m.PEDIDO_FECHA_ENTREGA,
+				m.PEDIDO_FECHA,
 				m.PEDIDO_TIEMPO_ESTIMADO_ENTREGA,
 				m.PEDIDO_CALIFICACION,
 				estp.ESTADO_PEDIDO_ID,
@@ -849,7 +849,7 @@ CREATE PROCEDURE migrar_pedidos
 				l.LOCAL_ID,
 				mdp.MP_ID,
 				ep.EP_ID
-			FROM 
+			FROM
 				gd_esquema.Maestra m
 					JOIN BASE_DE_GATOS_2.ESTADO_PEDIDO estp
 						ON m.PEDIDO_ESTADO = estp.ESTADO_PEDIDO_NOMBRE
@@ -861,13 +861,25 @@ CREATE PROCEDURE migrar_pedidos
 						ON m.LOCAL_DESCRIPCION = l.LOCAL_DESCRIPCION AND
 						m.LOCAL_NOMBRE = l.LOCAL_NOMBRE AND
 						d.DIRECCION_ID = l.LOCAL_DIRECCION_ID
+					JOIN BASE_DE_GATOS_2.TIPO_MEDIO_DE_PAGO tmp
+						ON tmp.TMP_TIPO = m.MEDIO_PAGO_TIPO
 					JOIN BASE_DE_GATOS_2.MEDIOS_DE_PAGO mdp
-						ON m.MEDIO_PAGO_TIPO = mdp.MP_TIPO AND
-						m.MEDIO_PAGO_NRO_TARJETA = mdp.MP_NUMERO_TARJETA
+						ON m.MEDIO_PAGO_NRO_TARJETA = mdp.MP_NUMERO_TARJETA
+						AND mdp.MP_TIPO = tmp.TIPO_MEDIO_PAGO_ID
 					JOIN BASE_DE_GATOS_2.ENVIO_PEDIDO ep
 						ON m.PEDIDO_PRECIO_ENVIO = ep.EP_PRECIO AND
 						m.PEDIDO_PROPINA = ep.EP_PROPINA
-
+			WHERE 
+				m.PEDIDO_NRO IS NOT NULL AND
+				m.PEDIDO_TOTAL_PRODUCTOS IS NOT NULL AND
+				m.PEDIDO_TARIFA_SERVICIO IS NOT NULL AND
+				m.PEDIDO_TOTAL_CUPONES IS NOT NULL AND
+				m.PEDIDO_TOTAL_SERVICIO IS NOT NULL AND
+				m.PEDIDO_OBSERV IS NOT NULL AND
+				m.PEDIDO_FECHA_ENTREGA IS NOT NULL AND
+				m.PEDIDO_FECHA IS NOT NULL AND
+				m.PEDIDO_TIEMPO_ESTIMADO_ENTREGA IS NOT NULL AND
+				m.PEDIDO_CALIFICACION IS NOT NULL
 		END
 GO
 
@@ -1229,10 +1241,10 @@ CREATE PROCEDURE migrar_cupones
 GO
 
 -- Cupon tipo
-IF EXISTS(SELECT [name] FROM sys.procedures WHERE [name] = 'migrar_cupon_tipo')
-DROP PROCEDURE migrar_cupon_tipo
+IF EXISTS(SELECT [name] FROM sys.procedures WHERE [name] = 'migrar_pedido_cupon_tipo')
+DROP PROCEDURE migrar_pedido_cupon_tipo
 GO
-CREATE PROCEDURE migrar_cupon_tipo
+CREATE PROCEDURE migrar_pedido_cupon_tipo
 	AS
 		BEGIN
 		INSERT INTO BASE_DE_GATOS_2.PEDIDO_CUPON_TIPO(PEDIDO_CUPON_TIPO_NOMBRE)
@@ -1307,6 +1319,63 @@ CREATE PROCEDURE migrar_pedido_cupon
 		END
 GO
 
+-- Marca tarjeta
+IF EXISTS(SELECT [name] FROM sys.procedures WHERE [name] = 'migrar_marcas_tarjeta')
+DROP PROCEDURE migrar_marcas_tarjeta
+GO
+CREATE PROCEDURE migrar_marcas_tarjeta
+	AS
+		BEGIN
+		INSERT INTO BASE_DE_GATOS_2.MARCAS_TARJETA(MARCA_TARJETA_NOMBRE)
+			SELECT DISTINCT
+				m.MARCA_TARJETA
+			FROM 
+				gd_esquema.Maestra m
+			WHERE 
+				m.MARCA_TARJETA IS NOT NULL
+		END
+GO
+
+-- Tipo medio de pago
+IF EXISTS(SELECT [name] FROM sys.procedures WHERE [name] = 'migrar_tipo_medio_de_pago')
+DROP PROCEDURE migrar_tipo_medio_de_pago
+GO
+CREATE PROCEDURE migrar_tipo_medio_de_pago
+	AS
+		BEGIN
+		INSERT INTO BASE_DE_GATOS_2.TIPO_MEDIO_DE_PAGO(TMP_TIPO)
+			SELECT DISTINCT
+				m.MEDIO_PAGO_TIPO
+			FROM 
+				gd_esquema.Maestra m
+			WHERE 
+				m.MEDIO_PAGO_TIPO IS NOT NULL
+		END
+GO
+
+--Medios de pago
+IF EXISTS(SELECT [name] FROM sys.procedures WHERE [name] = 'migrar_medios_de_pago')
+DROP PROCEDURE migrar_medios_de_pago
+GO
+CREATE PROCEDURE migrar_medios_de_pago
+	AS
+		BEGIN
+		INSERT INTO BASE_DE_GATOS_2.MEDIOS_DE_PAGO(MP_NUMERO_TARJETA, MP_TIPO, MP_MARCA_TARJETA, MP_USUARIO)
+			SELECT DISTINCT
+				m.MEDIO_PAGO_NRO_TARJETA,
+				tmp.TIPO_MEDIO_PAGO_ID,
+				mar.MARCA_TARJETA_ID,
+				u.USUARIO_ID
+			FROM 
+				gd_esquema.Maestra m
+			JOIN BASE_DE_GATOS_2.TIPO_MEDIO_DE_PAGO tmp ON m.MEDIO_PAGO_TIPO = tmp.TMP_TIPO
+			JOIN BASE_DE_GATOS_2.MARCAS_TARJETA mar ON m.MARCA_TARJETA = mar.MARCA_TARJETA_NOMBRE
+			JOIN BASE_DE_GATOS_2.USUARIOS u ON m.USUARIO_DNI = u.USUARIO_DNI
+			WHERE 
+				m.MEDIO_PAGO_NRO_TARJETA IS NOT NULL
+		END
+GO
+
 -- Executes
 EXEC migrar_local_tipos
 EXEC migrar_local_categorias
@@ -1325,6 +1394,10 @@ EXEC migrar_estados_envio_mensajeria
 EXEC migrar_usuarios
 EXEC migrar_direcciones_usuario
 
+EXEC migrar_marcas_tarjeta
+EXEC migrar_tipo_medio_de_pago
+EXEC migrar_medios_de_pago
+
 EXEC migrar_movilidades
 EXEC migrar_repartidores
 
@@ -1342,7 +1415,7 @@ EXEC migrar_solucion_reclamo
 EXEC migrar_reclamos
 
 EXEC migrar_cupones
-EXEC migrar_cupon_tipo
+EXEC migrar_pedido_cupon_tipo
 EXEC migrar_reclamo_cupon
 EXEC migrar_reclamo_cupon_tipo
 EXEC migrar_pedido_cupon
