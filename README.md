@@ -1,7 +1,7 @@
-## Grupo: BASE_DE_GATOS_2.0 47
-# Curso: K3114
+# Grupo: BASE_DE_GATOS_2.0 47
+## Curso: K3114
 
-# Integrantes: 
+## Integrantes: 
 
 - Lopez Joffre, Dolores - 1762023 (Responsable: dlopezjoffre@frba.utn.edu.ar)
 
