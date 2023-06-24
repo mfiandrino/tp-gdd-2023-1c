@@ -155,10 +155,10 @@ BEGIN
 END
 GO
 
-CREATE PROCEDURE BASE_DE_GATOS_2.migrar_dimension_rango_horarios
+CREATE PROCEDURE BASE_DE_GATOS_2.migrar_dimension_rango_horario
 AS
 BEGIN
-	INSERT INTO BASE_DE_GATOS_2.BI_dimension_rango_horarios(RANGO_INICIO, RANGO_FIN)
+	INSERT INTO BASE_DE_GATOS_2.BI_dimension_rango_horario(RANGO_INICIO, RANGO_FIN)
 		VALUES	('08:00:00.000', '09:59:59.999'),
 				    ('10:00:00.000', '11:59:59.999'),
 				    ('12:00:00.000', '13:59:59.999'),
@@ -288,7 +288,7 @@ GO
 
 EXEC BASE_DE_GATOS_2.migrar_dimension_tiempo
 EXEC BASE_DE_GATOS_2.migrar_dimension_dias
-EXEC BASE_DE_GATOS_2.migrar_dimension_rango_horarios
+EXEC BASE_DE_GATOS_2.migrar_dimension_rango_horario
 EXEC BASE_DE_GATOS_2.migrar_dimension_provincia_localidad
 EXEC BASE_DE_GATOS_2.migrar_dimension_rango_etario
 EXEC BASE_DE_GATOS_2.migrar_dimension_tipo_medio_pago
