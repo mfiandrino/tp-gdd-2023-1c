@@ -1,7 +1,7 @@
 CREATE TABLE BASE_DE_GATOS_2.BI_dimension_tiempo(
+  ID decimal(18,0) IDENTITY PRIMARY KEY,
   MES int not null,
   ANIO int not null,
-  PRIMARY KEY (MES, ANIO)
 )
 
 CREATE TABLE BASE_DE_GATOS_2.BI_dimension_dias(
@@ -10,9 +10,8 @@ CREATE TABLE BASE_DE_GATOS_2.BI_dimension_dias(
 )
 
 CREATE TABLE BASE_DE_GATOS_2.BI_dimension_rango_horario(
-  RANGO_INICIO time not null,
-  RANGO_FIN time not null,
-  PRIMARY KEY(RANGO_INICIO, RANGO_FIN)
+  ID decimal(18,0) IDENTITY PRIMARY KEY,
+  RANGO nvarchar(15) not null
 )
 
 CREATE TABLE BASE_DE_GATOS_2.BI_dimension_provincia_localidad(
@@ -22,9 +21,8 @@ CREATE TABLE BASE_DE_GATOS_2.BI_dimension_provincia_localidad(
 )
 
 CREATE TABLE BASE_DE_GATOS_2.BI_dimension_rango_etario(
-  RANGO_INICIO int not null,
-  RANGO_FIN int not null,
-  PRIMARY KEY(RANGO_INICIO, RANGO_FIN)
+  ID decimal(18,0) IDENTITY PRIMARY KEY,
+  RANGO nvarchar(10) not null
 )
 
 CREATE TABLE BASE_DE_GATOS_2.BI_dimension_tipo_medio_pago(
@@ -149,24 +147,24 @@ CREATE PROCEDURE BASE_DE_GATOS_2.migrar_dimension_dias
 AS
 BEGIN
 	INSERT INTO BASE_DE_GATOS_2.BI_dimension_dias(DIA)
-		SELECT
-			hd.DIA
-		FROM BASE_DE_GATOS_2.HORARIO_DIAS hd
+		SELECT DISTINCT
+			DATENAME(WEEKDAY, r.FECHA)
+		FROM BASE_DE_GATOS_2.RECLAMOS r
 END
 GO
 
 CREATE PROCEDURE BASE_DE_GATOS_2.migrar_dimension_rango_horario
 AS
 BEGIN
-	INSERT INTO BASE_DE_GATOS_2.BI_dimension_rango_horario(RANGO_INICIO, RANGO_FIN)
-		VALUES	('08:00:00.000', '09:59:59.999'),
-				    ('10:00:00.000', '11:59:59.999'),
-				    ('12:00:00.000', '13:59:59.999'),
-    				('14:00:00.000', '15:59:59.999'),
-    				('16:00:00.000', '17:59:59.999'),
-    				('18:00:00.000', '19:59:59.999'),
-    				('20:00:00.000', '21:59:59.999'),
-    				('22:00:00.000', '23:59:59.999');
+	INSERT INTO BASE_DE_GATOS_2.BI_dimension_rango_horario(RANGO)
+		VALUES ('08:00 - 09:59'),
+				    ('10:00 - 11:59'),
+				    ('12:00 - 13:59'),
+    				('14:00 - 15:59'),
+    				('16:00 - 17:59'),
+    				('18:00 - 19:59'),
+    				('20:00 - 21:59'),
+    				('22:00 - 23:59');
 END
 GO
 
@@ -185,11 +183,11 @@ GO
 CREATE PROCEDURE BASE_DE_GATOS_2.migrar_dimension_rango_etario
 AS
 BEGIN
-	INSERT INTO BASE_DE_GATOS_2.BI_dimension_rango_etario(RANGO_INICIO, RANGO_FIN)
-	VALUES	(0, 25),
-			(26, 35),
-			(36, 55),
-			(56, 130);
+	INSERT INTO BASE_DE_GATOS_2.BI_dimension_rango_etario(RANGO)
+	VALUES	('0 - 25'),
+			('26 - 35'),
+			('36 - 55'),
+			('56 - 130');
 END
 GO
 
@@ -300,3 +298,220 @@ EXEC BASE_DE_GATOS_2.migrar_dimension_estados_pedidos
 EXEC BASE_DE_GATOS_2.migrar_dimension_estados_envio_mensajeria
 EXEC BASE_DE_GATOS_2.migrar_dimension_estados_reclamos
 EXEC BASE_DE_GATOS_2.migrar_dimension_tipos_reclamos
+GO
+
+CREATE FUNCTION BASE_DE_GATOS_2.BI_obtener_rango_etario (@fecha_de_nacimiento datetime2)
+    RETURNS nvarchar(10)
+AS
+BEGIN
+    DECLARE @edad int;
+    SELECT @edad = (DATEDIFF (DAYOFYEAR, @fecha_de_nacimiento,GETDATE())) / 365; 
+    DECLARE @rango_etario nvarchar(10);
+
+    IF (@edad < 25)
+        BEGIN
+            SET @rango_etario = '0 - 25';
+        END
+    ELSE IF (@edad > 24 AND @edad <36)
+        BEGIN
+            SET @rango_etario = '26 - 35';
+        END
+    ELSE IF (@edad > 35 AND @edad <56)
+        BEGIN
+            SET @rango_etario = '36 - 55';
+        END
+    ELSE IF(@edad > 55)
+        BEGIN
+            SET @rango_etario = '56 - 130';
+        END
+    RETURN @rango_etario
+END
+GO
+
+CREATE FUNCTION BASE_DE_GATOS_2.BI_obtener_rango_horario (@fecha datetime2)
+    RETURNS nvarchar(15)
+AS
+BEGIN    
+    DECLARE @hora int;
+    SELECT @hora =  (CONVERT(int,DATEPART(HOUR, @fecha)));
+    DECLARE @rango_horario nvarchar(15);
+
+    IF (@hora >= 8 and @hora < 10)
+        BEGIN
+            SET @rango_horario = '8:00 - 09:59';
+        END
+    ELSE IF (@hora >= 10 AND @hora < 12)
+        BEGIN
+            SET @rango_horario = '10:00 - 11:59';
+        END
+    ELSE IF (@hora >= 12 AND @hora < 14)
+        BEGIN
+            SET @rango_horario = '12:00 - 13:59';
+        END
+    ELSE IF (@hora >= 14 AND @hora < 16)
+        BEGIN
+            SET @rango_horario = '14:00 - 15:59';
+        END
+    ELSE IF (@hora >= 16 AND @hora < 18)
+        BEGIN
+            SET @rango_horario = '16:00 - 17:59';
+        END
+        ELSE IF (@hora >= 18 AND @hora < 20)
+        BEGIN
+            SET @rango_horario = '18:00 - 19:59';
+        END
+    ELSE IF (@hora >= 20 AND @hora < 22)
+        BEGIN
+            SET @rango_horario = '20:00 - 21:59';
+        END
+    ELSE IF (@hora >= 22 AND @hora < 24)
+        BEGIN
+            SET @rango_horario = '22:00 - 23:59';
+        END
+
+    RETURN @rango_horario;
+END
+GO
+
+CREATE TABLE BASE_DE_GATOS_2.BI_hechos_reclamo(
+  NUMERO decimal(18,0) PRIMARY KEY,
+  TIEMPO_ID decimal(18,0),
+  LOCAL_ID decimal(18,0),
+  DIA_ID decimal(18,0),
+  RANGO_HORARIO_ID decimal(18,0),
+  TIEMPO_RESOLUCION decimal(18,0),
+  TIPO_RECLAMO_ID decimal(18,0),
+  RANGO_ETARIO_OPERADOR_ID decimal(18,0),
+  MONTO_CUPON decimal(18,2)
+)
+
+ALTER TABLE BASE_DE_GATOS_2.BI_hechos_reclamo
+ADD CONSTRAINT FK_HECHOS_RECLAMO_TIEMPO FOREIGN KEY (TIEMPO_ID) REFERENCES BASE_DE_GATOS_2.BI_dimension_tiempo(ID),
+CONSTRAINT FK_HECHOS_RECLAMO_LOCAL FOREIGN KEY (LOCAL_ID) REFERENCES BASE_DE_GATOS_2.BI_dimension_local(ID),
+CONSTRAINT FK_HECHOS_RECLAMO_DIA FOREIGN KEY (DIA_ID) REFERENCES BASE_DE_GATOS_2.BI_dimension_dias(ID),
+CONSTRAINT FK_HECHOS_RECLAMO_RANGO_HORARIO FOREIGN KEY (RANGO_HORARIO_ID) REFERENCES BASE_DE_GATOS_2.BI_dimension_rango_horario(ID),
+CONSTRAINT FK_HECHOS_RECLAMO_TIPO_RECLAMO FOREIGN KEY (TIPO_RECLAMO_ID) REFERENCES BASE_DE_GATOS_2.BI_dimension_tipos_reclamos(ID),
+CONSTRAINT FK_HECHOS_RECLAMO_RANGO_ETARIO FOREIGN KEY (RANGO_ETARIO_OPERADOR_ID) REFERENCES BASE_DE_GATOS_2.BI_dimension_rango_etario(ID);
+GO
+
+
+CREATE PROCEDURE BASE_DE_GATOS_2.BI_migrar_hechos_reclamo
+  AS
+    BEGIN
+    INSERT INTO BASE_DE_GATOS_2.BI_hechos_reclamo(
+      NUMERO,
+      TIEMPO_ID,
+      LOCAL_ID,
+      DIA_ID,
+      RANGO_HORARIO_ID,
+      TIEMPO_RESOLUCION,
+      TIPO_RECLAMO_ID,
+      RANGO_ETARIO_OPERADOR_ID,
+      MONTO_CUPON
+    )
+    SELECT
+      r.NUMERO,
+      bdt.ID,
+      bdl.ID,
+      bdd.ID,
+      brh.ID,
+      (DATEDIFF(MINUTE, r.FECHA, r.FECHA_SOLUCION)),
+      r.TIPO_ID,
+      bre.ID,
+      c.MONTO
+    FROM
+      BASE_DE_GATOS_2.RECLAMOS r
+		JOIN
+      BASE_DE_GATOS_2.BI_dimension_tiempo bdt
+        ON MONTH(r.FECHA) = bdt.MES
+        AND YEAR(r.FECHA) = bdt.ANIO
+        JOIN
+      BASE_DE_GATOS_2.PEDIDOS p
+        ON r.PEDIDO_NUMERO = p.NUMERO
+        JOIN 
+      BASE_DE_GATOS_2.LOCALES l
+        ON p.LOCAL_ID = l.ID
+        JOIN 
+      BASE_DE_GATOS_2.BI_dimension_local bdl
+        ON l.NOMBRE = bdl.LOCAL_NOMBRE
+        JOIN
+      BASE_DE_GATOS_2.BI_dimension_dias bdd
+        ON DATENAME(WEEKDAY, r.FECHA) = bdd.DIA
+        JOIN
+      BASE_DE_GATOS_2.BI_dimension_rango_horario brh
+        ON BASE_DE_GATOS_2.BI_obtener_rango_horario(r.FECHA) = brh.RANGO
+        JOIN
+		BASE_DE_GATOS_2.OPERADORES o
+        ON r.OPERADOR_ID = o.ID
+		JOIN
+	  BASE_DE_GATOS_2.BI_dimension_rango_etario bre
+		ON BASE_DE_GATOS_2.BI_obtener_rango_etario(o.FECHA_NACIMIENTO) = bre.RANGO      
+       JOIN
+      BASE_DE_GATOS_2.RECLAMO_CUPON rc
+        ON r.NUMERO = rc.RECLAMO_NUMERO
+        JOIN
+      BASE_DE_GATOS_2.CUPONES c
+        ON rc.CUPON_NUMERO = c.NUMERO
+    END
+GO
+        
+
+CREATE VIEW BI_VIEW_CANT_RECLAMO_X_MES_X_LOCAL_X_DIA_X_RANGO_HORARIO 
+AS
+  SELECT 
+    COUNT(*) cantidad_reclamos,
+    dt.ANIO,
+    dt.MES,
+    dl.LOCAL_NOMBRE,
+    dd.DIA,
+    drh.RANGO rango_horario
+  FROM BASE_DE_GATOS_2.BI_hechos_reclamo hr 
+    JOIN BASE_DE_GATOS_2.BI_dimension_tiempo dt ON dt.ID = hr.TIEMPO_ID
+    JOIN BASE_DE_GATOS_2.BI_dimension_local dl ON dl.ID = hr.LOCAL_ID
+    JOIN BASE_DE_GATOS_2.BI_dimension_dias dd ON dd.ID = hr.DIA_ID
+    JOIN BASE_DE_GATOS_2.BI_dimension_rango_horario drh ON drh.ID = hr.RANGO_HORARIO_ID
+  GROUP BY 
+    dt.ANIO,
+    dt.MES,
+    dl.LOCAL_NOMBRE,
+    dd.DIA,
+    drh.RANGO
+
+GO
+
+
+
+CREATE VIEW BI_VIEW_TIEMPO_PROMEDIO_RESOLUCION_RECLAMOS_X_MES_X_TIPO_RECLAMO_X_RANGO_ETARIO_OPERADORES 
+AS
+  SELECT 
+    AVG(hr.TIEMPO_RESOLUCION) tiempo_promedio_resolucion,
+    dt.ANIO,
+    dt.MES,
+    dtr.TIPO_RECLAMO,
+    dre.RANGO rango_etario_operador
+  FROM BASE_DE_GATOS_2.BI_hechos_reclamo hr 
+    JOIN BASE_DE_GATOS_2.BI_dimension_tiempo dt ON dt.ID = hr.TIEMPO_ID
+    JOIN BASE_DE_GATOS_2.BI_dimension_tipos_reclamos dtr ON dtr.ID = hr.TIPO_RECLAMO_ID
+    JOIN BASE_DE_GATOS_2.BI_dimension_rango_etario dre ON dre.ID = hr.RANGO_ETARIO_OPERADOR_ID
+  GROUP BY 
+    dt.ANIO,
+    dt.MES,
+    dtr.TIPO_RECLAMO,
+    dre.RANGO
+GO
+
+
+CREATE VIEW BI_VIEW_MONTO_CUPON_RECLAMO_X_MES
+AS
+  SELECT 
+    SUM(hr.MONTO_CUPON) monto_cupones,
+    dt.ANIO,
+    dt.MES
+  FROM BASE_DE_GATOS_2.BI_hechos_reclamo hr 
+    JOIN BASE_DE_GATOS_2.BI_dimension_tiempo dt ON dt.ID = hr.TIEMPO_ID
+  GROUP BY 
+    dt.ANIO,
+    dt.MES
+GO
+
+exec BASE_DE_GATOS_2.BI_migrar_hechos_reclamo
