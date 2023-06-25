@@ -55,7 +55,7 @@ WHERE schema_id = SCHEMA_ID('BASE_DE_GATOS_2') AND NAME LIKE 'BI_%'
 EXEC sp_executesql @drop_views_bi;
 GO
 
--- TABLAS --
+-- TABLAS DIMENSIONES --
 
 CREATE TABLE BASE_DE_GATOS_2.BI_dimension_tiempo(
 	ID decimal(18,0) IDENTITY PRIMARY KEY,
@@ -131,7 +131,7 @@ CREATE TABLE BASE_DE_GATOS_2.BI_dimension_tipos_reclamos(
 )
 GO
 
--- PROCEDURES --
+-- PROCEDURES DIMENSIONES --
 
 CREATE PROCEDURE BASE_DE_GATOS_2.BI_migrar_dimension_tiempo
 	AS
@@ -356,11 +356,9 @@ EXEC BASE_DE_GATOS_2.BI_migrar_dimension_estados_reclamos
 EXEC BASE_DE_GATOS_2.BI_migrar_dimension_tipos_reclamos
 GO
 
---------------------------------------------------------------------------------------------
 
--- HECHOS --
+-- FUNCIONES --
 
--- FUNCIONES
 CREATE FUNCTION BASE_DE_GATOS_2.BI_obtener_rango_etario (@fecha_de_nacimiento datetime2)
 		RETURNS nvarchar(10)
 AS
@@ -435,7 +433,8 @@ END
 GO
 
 
--- TABLAS
+-- TABLAS HECHOS --
+
 CREATE TABLE BASE_DE_GATOS_2.BI_hechos_reclamo(
 	NUMERO decimal(18,0) PRIMARY KEY,
 	TIEMPO_ID decimal(18,0),
@@ -481,7 +480,8 @@ CREATE TABLE BASE_DE_GATOS_2.BI_hechos_envio_mensajeria (
 	TIPO_PAQUETE_ID decimal(18, 0) not null 
 )
 
--- CONSTRAINTS
+-- CONSTRAINTS HECHOS --
+
 ALTER TABLE BASE_DE_GATOS_2.BI_hechos_reclamo
 ADD CONSTRAINT FK_HECHOS_RECLAMO_TIEMPO FOREIGN KEY (TIEMPO_ID) REFERENCES BASE_DE_GATOS_2.BI_dimension_tiempo(ID),
 CONSTRAINT FK_HECHOS_RECLAMO_LOCAL FOREIGN KEY (LOCAL_ID) REFERENCES BASE_DE_GATOS_2.BI_dimension_local(ID),
@@ -512,7 +512,8 @@ ALTER TABLE BASE_DE_GATOS_2.BI_hechos_pedidos
 
 GO
 
--- PROCEDURES DE HECHOS
+-- PROCEDURES HECHOS --
+
 CREATE PROCEDURE BASE_DE_GATOS_2.BI_migrar_hechos_reclamo
 	AS
 		BEGIN
@@ -717,7 +718,6 @@ CREATE PROCEDURE BASE_DE_GATOS_2.BI_migrar_hechos_pedidos
 	END
 GO
 
--- Migrar hechos
 EXEC BASE_DE_GATOS_2.BI_migrar_hechos_reclamo
 EXEC BASE_DE_GATOS_2.BI_migrar_hechos_envio_mensajeria
 EXEC BASE_DE_GATOS_2.BI_migrar_hechos_pedidos
