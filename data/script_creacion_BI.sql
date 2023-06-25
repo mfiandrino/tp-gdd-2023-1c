@@ -397,7 +397,7 @@ BEGIN
 
 		IF (@hora >= 8 and @hora < 10)
 				BEGIN
-						SET @rango_horario = '8:00 - 10:00';
+						SET @rango_horario = '08:00 - 10:00';
 				END
 		ELSE IF (@hora >= 10 AND @hora < 12)
 				BEGIN
