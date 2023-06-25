@@ -194,10 +194,10 @@ CREATE TABLE BASE_DE_GATOS_2.PEDIDOS (
 	TIEMPO_ESTIMADO_ENTREGA decimal(18,2) not null,
 	CALIFICACION decimal(18, 0) not null,
 	PRECIO_ENVIO decimal(18,2),
-  PROPINA decimal(18,2),
+  	PROPINA decimal(18,2),
 	-- FKs
-  REPARTIDOR_ID DECIMAL(18, 0),
-  DIRECCION_USUARIO_ID DECIMAL(18, 0),
+	REPARTIDOR_ID DECIMAL(18, 0),
+	DIRECCION_USUARIO_ID DECIMAL(18, 0),
 	ESTADO_ID decimal(18, 0) not null,
 	USUARIO_ID decimal(18, 0) not null,
 	LOCAL_ID decimal(18, 0) not null,
