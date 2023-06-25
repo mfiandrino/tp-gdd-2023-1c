@@ -436,15 +436,15 @@ GO
 -- TABLAS HECHOS --
 
 CREATE TABLE BASE_DE_GATOS_2.BI_hechos_reclamo(
-	NUMERO decimal(18,0) PRIMARY KEY,
+	CANTIDAD decimal(18,0),
+	SUMATORIA_TIEMPO_RESOLUCION decimal(18,0),
+	MONTO_CUPONES decimal(18,2),
 	TIEMPO_ID decimal(18,0),
 	LOCAL_ID decimal(18,0),
 	DIA_ID decimal(18,0),
 	RANGO_HORARIO_ID decimal(18,0),
-	TIEMPO_RESOLUCION decimal(18,0),
 	TIPO_RECLAMO_ID decimal(18,0),
-	RANGO_ETARIO_OPERADOR_ID decimal(18,0),
-	MONTO_CUPON decimal(18,2)
+	RANGO_ETARIO_OPERADOR_ID decimal(18,0)
 )
 
 CREATE TABLE BASE_DE_GATOS_2.BI_hechos_pedidos (
@@ -518,26 +518,26 @@ CREATE PROCEDURE BASE_DE_GATOS_2.BI_migrar_hechos_reclamo
 	AS
 		BEGIN
 		INSERT INTO BASE_DE_GATOS_2.BI_hechos_reclamo(
-			NUMERO,
+			CANTIDAD,
+			SUMATORIA_TIEMPO_RESOLUCION,
+			MONTO_CUPONES,
 			TIEMPO_ID,
 			LOCAL_ID,
 			DIA_ID,
 			RANGO_HORARIO_ID,
-			TIEMPO_RESOLUCION,
 			TIPO_RECLAMO_ID,
-			RANGO_ETARIO_OPERADOR_ID,
-			MONTO_CUPON
+			RANGO_ETARIO_OPERADOR_ID
 		)
 		SELECT
-			r.NUMERO,
+			COUNT(*),
+			SUM((DATEDIFF(MINUTE, r.FECHA, r.FECHA_SOLUCION))),
+			SUM(c.MONTO),
 			bdt.ID,
 			bdl.ID,
 			bdd.ID,
 			brh.ID,
-			(DATEDIFF(MINUTE, r.FECHA, r.FECHA_SOLUCION)),
-			r.TIPO_ID,
-			bre.ID,
-			c.MONTO
+			bdtr.ID,
+			bre.ID
 		FROM
 			BASE_DE_GATOS_2.RECLAMOS r
 		JOIN
@@ -563,14 +563,27 @@ CREATE PROCEDURE BASE_DE_GATOS_2.BI_migrar_hechos_reclamo
 			BASE_DE_GATOS_2.OPERADORES o
 				ON r.OPERADOR_ID = o.ID
 				JOIN
+			BASE_DE_GATOS_2.RECLAMO_TIPOS rt
+				ON r.TIPO_ID = rt.ID
+				JOIN 
+			BASE_DE_GATOS_2.BI_dimension_tipos_reclamos bdtr
+				ON rt.TIPO = bdtr.TIPO_RECLAMO
+				JOIN
 			BASE_DE_GATOS_2.BI_dimension_rango_etario bre
-				ON BASE_DE_GATOS_2.BI_obtener_rango_etario(o.FECHA_NACIMIENTO) = bre.RANGO      
+				ON BASE_DE_GATOS_2.BI_obtener_rango_etario(o.FECHA_NACIMIENTO) = bre.RANGO
 				JOIN
 			BASE_DE_GATOS_2.RECLAMO_CUPON rc
 				ON r.NUMERO = rc.RECLAMO_NUMERO
 				JOIN
 			BASE_DE_GATOS_2.CUPONES c
 				ON rc.CUPON_NUMERO = c.NUMERO
+		GROUP BY
+			bdt.ID,
+			bdl.ID,
+			bdd.ID,
+			brh.ID,
+			bdtr.ID,
+			bre.ID
 		END
 GO
 				
@@ -1007,10 +1020,10 @@ AS
 GO
 
 -- Cantidad de reclamos mensuales recibidos por cada local en función del día de la semana y rango horario.
-CREATE VIEW BASE_DE_GATOS_2.BI_VIEW_CANT_RECLAMOS_X_MES_X_LOCAL_X_DIA_X_RANGO_HORARIO 
+CREATE VIEW BASE_DE_GATOS_2.BI_VIEW_CANT_RECLAMOS_X_MES_X_LOCAL_X_DIA_X_RANGO_HORARIO
 AS
-	SELECT 
-		COUNT(*) cantidad_reclamos,
+	SELECT
+		SUM(hr.CANTIDAD) cantidad_reclamos,
 		dt.ANIO,
 		dt.MES,
 		dl.NOMBRE_LOCAL,
@@ -1032,8 +1045,8 @@ GO
 -- Tiempo promedio de resolución de reclamos mensual según cada tipo de reclamo y rango etario de los operadores. 
 CREATE VIEW BASE_DE_GATOS_2.BI_VIEW_PROMEDIO_TIEMPO_RESOLUCION_RECLAMOS_X_MES_X_TIPO_RECLAMO_X_RANGO_ETARIO_OPERADORES
 AS
-	SELECT 
-		AVG(hr.TIEMPO_RESOLUCION) promedio_tiempo_resolucion,
+	SELECT
+		(SUM(hr.SUMATORIA_TIEMPO_RESOLUCION) / SUM(hr.CANTIDAD)) promedio_tiempo_resolucion, -- TODO: ver redondeos
 		dt.ANIO,
 		dt.MES,
 		dtr.TIPO_RECLAMO,
@@ -1053,7 +1066,7 @@ GO
 CREATE VIEW BASE_DE_GATOS_2.BI_VIEW_MONTO_CUPONES_DE_RECLAMOS_X_MES
 AS
 	SELECT 
-		SUM(hr.MONTO_CUPON) monto_cupones,
+		SUM(hr.MONTO_CUPONES) monto_cupones,
 		dt.ANIO,
 		dt.MES
 	FROM BASE_DE_GATOS_2.BI_hechos_reclamo hr 
