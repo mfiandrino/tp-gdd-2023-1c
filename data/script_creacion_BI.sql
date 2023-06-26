@@ -942,64 +942,91 @@ GO
 -- El porcentaje se calcula en función del total general de pedidos y envíos mensuales entregados.)
 CREATE VIEW BASE_DE_GATOS_2.BI_VIEW_PORCENTAJE_ENVIOS_X_RANGO_ETARIO_REPARTIDORES_X_MES_X_LOCALIDAD
 AS
-	WITH cantidad_total_pedidos_envios AS (
-		SELECT
-			SUM(hp.CANTIDAD) AS cantidad_total,
-			dt.MES AS mes,
-			dt.ANIO AS anio,
-			dpl.LOCALIDAD AS localidad,
-			dre.RANGO AS rango_etario_repartidor,
-			hp.FUE_ENTREGADO AS fue_entregado
-		FROM
-			BASE_DE_GATOS_2.BI_hechos_pedidos hp
+	WITH total_pedidos_mensajeria AS (
+		SELECT 
+				SUM(total_entregados) total_entregados,
+				mes,
+				anio,
+				localidad
+		FROM (
+				SELECT
+						dt.MES mes,
+						dt.ANIO anio,
+						dpl.LOCALIDAD localidad,
+						COUNT(*) total_entregados
+				FROM
+						BASE_DE_GATOS_2.BI_hechos_pedidos hp
 				JOIN BASE_DE_GATOS_2.BI_dimension_tiempo dt ON dt.ID = hp.TIEMPO_ID
 				JOIN BASE_DE_GATOS_2.BI_dimension_provincia_localidad dpl ON dpl.ID = hp.LOCALIDAD_ID
-				JOIN BASE_DE_GATOS_2.BI_dimension_rango_etario dre ON dre.ID = hp.RANGO_ETARIO_REPARTIDOR_ID
-		GROUP BY 
-			dt.MES,
-			dt.ANIO,
-			dpl.LOCALIDAD,
-			dre.RANGO,
-			hp.FUE_ENTREGADO
+				WHERE hp.FUE_ENTREGADO = 1
+				GROUP BY dt.MES, dt.ANIO, dpl.LOCALIDAD
 
-		UNION ALL
+				UNION ALL
 
-		SELECT
-			SUM(hem.CANTIDAD) AS cantidad_total,
-			dt.MES AS mes,
-			dt.ANIO AS anio,
-			dpl.LOCALIDAD AS localidad,
-			dre.RANGO AS rango_etario_repartidor,
-			hem.FUE_ENTREGADO AS fue_entregado
-		FROM
-			BASE_DE_GATOS_2.BI_hechos_envio_mensajeria hem
+				SELECT
+						dt.MES mes, 
+						dt.ANIO anio,
+						dpl.LOCALIDAD localidad, 
+						COUNT(*) total_entregados
+				FROM
+						BASE_DE_GATOS_2.BI_hechos_envio_mensajeria hem
 				JOIN BASE_DE_GATOS_2.BI_dimension_tiempo dt ON dt.ID = hem.TIEMPO_ID
 				JOIN BASE_DE_GATOS_2.BI_dimension_provincia_localidad dpl ON dpl.ID = hem.LOCALIDAD_ID
-				JOIN BASE_DE_GATOS_2.BI_dimension_rango_etario dre ON dre.ID = hem.RANGO_ETARIO_REPARTIDOR_ID
-		GROUP BY 
-			dt.MES,
-			dt.ANIO,
-			dpl.LOCALIDAD,
-			dre.RANGO,
-			hem.FUE_ENTREGADO
+				WHERE hem.FUE_ENTREGADO = 1
+				GROUP BY dt.MES, dt.ANIO, dpl.LOCALIDAD
+		) AS suma_totales
+		GROUP BY mes, anio, localidad
+	),
+
+	entregados_rango_etario AS (
+		SELECT 
+			mes,
+			anio,
+			localidad,
+			rango_etario_repartidor,
+			SUM(entregados) total_entregados
+		FROM (
+				SELECT
+					dt.MES mes,
+					dt.ANIO anio,
+					dpl.LOCALIDAD localidad,
+					drer.RANGO rango_etario_repartidor,
+					COUNT(*) entregados
+				FROM
+					BASE_DE_GATOS_2.BI_hechos_pedidos hp
+						JOIN BASE_DE_GATOS_2.BI_dimension_tiempo dt ON dt.ID = hp.TIEMPO_ID
+						JOIN BASE_DE_GATOS_2.BI_dimension_rango_etario drer ON drer.ID = hp.RANGO_ETARIO_REPARTIDOR_ID
+						JOIN BASE_DE_GATOS_2.BI_dimension_provincia_localidad dpl ON dpl.ID = hp.LOCALIDAD_ID
+				WHERE hp.FUE_ENTREGADO = 1
+				GROUP BY dt.MES, dt.ANIO, drer.RANGO, dpl.LOCALIDAD
+
+				UNION ALL
+
+				SELECT
+					dt.MES mes,
+					dt.ANIO anio,
+					dpl.LOCALIDAD localidad,
+					drer.RANGO rango_etario_repartidor,
+					COUNT(*) entregados
+				FROM
+					BASE_DE_GATOS_2.BI_hechos_envio_mensajeria hem
+						JOIN BASE_DE_GATOS_2.BI_dimension_tiempo dt ON dt.ID = hem.TIEMPO_ID
+						JOIN BASE_DE_GATOS_2.BI_dimension_rango_etario drer ON drer.ID = hem.RANGO_ETARIO_REPARTIDOR_ID
+						JOIN BASE_DE_GATOS_2.BI_dimension_provincia_localidad dpl ON dpl.ID = hem.LOCALIDAD_ID
+				WHERE hem.FUE_ENTREGADO = 1
+				GROUP BY dt.MES, dt.ANIO, drer.RANGO, dpl.LOCALIDAD
+		) AS suma_entregas_x_rangos_x_localidad
+		GROUP BY mes, anio, rango_etario_repartidor, localidad
 	)
+
 	SELECT
-		SUM(CASE WHEN fue_entregado = 1 
-				THEN cantidad_total
-                ELSE 0
-            END) * 100
-         / SUM(cantidad_total) AS porcentaje,
-		mes,
-		anio,
-		localidad,
-		rango_etario_repartidor
-	FROM
-		cantidad_total_pedidos_envios
-	GROUP BY
-		mes,
-		anio,
-		localidad,
-		rango_etario_repartidor
+		ere.rango_etario_repartidor,
+		ROUND((CAST(ere.total_entregados AS FLOAT) / tp.total_entregados) * 100, 2) as porcentaje_entregados,
+		ere.mes,
+		ere.anio,
+		ere.localidad
+	FROM entregados_rango_etario ere
+	JOIN total_pedidos_mensajeria tp ON ere.mes = tp.mes AND ere.anio = tp.anio AND ere.localidad = tp.localidad;
 GO
 
 -- Promedio mensual del valor asegurado de los paquetes enviados a través del servicio de mensajería en función del tipo de paquete.
