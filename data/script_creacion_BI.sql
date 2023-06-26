@@ -934,9 +934,8 @@ AS
 		dl.NOMBRE_LOCAL
 GO
 
--- Porcentaje de pedidos y mensajería entregados mensualmente según el rango etario de los repartidores y la localidad.
--- (Este indicador se debe tener en cuenta y sumar tanto los envíos de pedidos como los de mensajería.
--- El porcentaje se calcula en función del total general de pedidos y envíos mensuales entregados.)
+-- Porcentaje de pedidos y mensajería entregados mensualmente según el rango etario de los repartidores y la localidad, 
+-- en función del total general de pedidos y envíos mensuales entregados.
 CREATE VIEW BASE_DE_GATOS_2.BI_VIEW_PORCENTAJE_ENVIOS_X_RANGO_ETARIO_REPARTIDORES_X_MES_X_LOCALIDAD
 AS
 	WITH total_pedidos_mensajeria AS (
