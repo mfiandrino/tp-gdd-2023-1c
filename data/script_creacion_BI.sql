@@ -198,7 +198,7 @@ CREATE PROCEDURE BASE_DE_GATOS_2.BI_migrar_dimension_tiempo
 		END
 GO
 
-CREATE PROCEDURE BASE_DE_GATOS_2.BI_migrar_dimension_dias
+CREATE PROCEDURE BASE_DE_GATOS_2.BI_migrar_dimension_dia_semana
 	AS
 		BEGIN
 			INSERT INTO BASE_DE_GATOS_2.BI_dimension_dia_semana(DIA)
@@ -297,7 +297,7 @@ CREATE PROCEDURE BASE_DE_GATOS_2.BI_migrar_dimension_tipo_paquete
 		END
 GO
 
-CREATE PROCEDURE BASE_DE_GATOS_2.BI_migrar_dimension_estados_pedidos
+CREATE PROCEDURE BASE_DE_GATOS_2.BI_migrar_dimension_estado_pedido
 	AS
 		BEGIN
 		INSERT INTO BASE_DE_GATOS_2.BI_dimension_estado_pedido(ESTADO_PEDIDO)
@@ -307,7 +307,7 @@ CREATE PROCEDURE BASE_DE_GATOS_2.BI_migrar_dimension_estados_pedidos
 		END
 GO
 
-CREATE PROCEDURE BASE_DE_GATOS_2.BI_migrar_dimension_estados_envio_mensajeria
+CREATE PROCEDURE BASE_DE_GATOS_2.BI_migrar_dimension_estado_envio_mensajeria
 	AS
 		BEGIN
 		INSERT INTO BASE_DE_GATOS_2.BI_dimension_estado_envio_mensajeria(ESTADO_ENVIO_MENSAJERIA)
@@ -317,7 +317,7 @@ CREATE PROCEDURE BASE_DE_GATOS_2.BI_migrar_dimension_estados_envio_mensajeria
 		END
 GO
 
-CREATE PROCEDURE BASE_DE_GATOS_2.BI_migrar_dimension_estados_reclamos
+CREATE PROCEDURE BASE_DE_GATOS_2.BI_migrar_dimension_estado_reclamo
 	AS
 		BEGIN
 		INSERT INTO BASE_DE_GATOS_2.BI_dimension_estado_reclamo(ESTADO_RECLAMO)
@@ -327,7 +327,7 @@ CREATE PROCEDURE BASE_DE_GATOS_2.BI_migrar_dimension_estados_reclamos
 		END
 GO
 
-CREATE PROCEDURE BASE_DE_GATOS_2.BI_migrar_dimension_tipos_reclamos
+CREATE PROCEDURE BASE_DE_GATOS_2.BI_migrar_dimension_tipo_reclamo
 	AS
 		BEGIN
 		INSERT INTO BASE_DE_GATOS_2.BI_dimension_tipo_reclamo(TIPO_RECLAMO)
@@ -338,7 +338,7 @@ CREATE PROCEDURE BASE_DE_GATOS_2.BI_migrar_dimension_tipos_reclamos
 GO
 
 EXEC BASE_DE_GATOS_2.BI_migrar_dimension_tiempo
-EXEC BASE_DE_GATOS_2.BI_migrar_dimension_dias
+EXEC BASE_DE_GATOS_2.BI_migrar_dimension_dia_semana
 EXEC BASE_DE_GATOS_2.BI_migrar_dimension_rango_horario
 EXEC BASE_DE_GATOS_2.BI_migrar_dimension_provincia_localidad
 EXEC BASE_DE_GATOS_2.BI_migrar_dimension_rango_etario
@@ -347,10 +347,10 @@ EXEC BASE_DE_GATOS_2.BI_migrar_dimension_local
 EXEC BASE_DE_GATOS_2.BI_migrar_dimension_tipo_local
 EXEC BASE_DE_GATOS_2.BI_migrar_dimension_tipo_movilidad
 EXEC BASE_DE_GATOS_2.BI_migrar_dimension_tipo_paquete
-EXEC BASE_DE_GATOS_2.BI_migrar_dimension_estados_pedidos
-EXEC BASE_DE_GATOS_2.BI_migrar_dimension_estados_envio_mensajeria
-EXEC BASE_DE_GATOS_2.BI_migrar_dimension_estados_reclamos
-EXEC BASE_DE_GATOS_2.BI_migrar_dimension_tipos_reclamos
+EXEC BASE_DE_GATOS_2.BI_migrar_dimension_estado_pedido
+EXEC BASE_DE_GATOS_2.BI_migrar_dimension_estado_envio_mensajeria
+EXEC BASE_DE_GATOS_2.BI_migrar_dimension_estado_reclamo
+EXEC BASE_DE_GATOS_2.BI_migrar_dimension_tipo_reclamo
 GO
 
 
@@ -444,7 +444,7 @@ CREATE TABLE BASE_DE_GATOS_2.BI_hechos_reclamo(
 	RANGO_ETARIO_OPERADOR_ID decimal(18,0)
 )
 
-CREATE TABLE BASE_DE_GATOS_2.BI_hechos_pedidos (
+CREATE TABLE BASE_DE_GATOS_2.BI_hechos_pedido (
 	CANTIDAD decimal(18, 0) not null,
 	SUMATORIA_MONTO_TOTAL decimal(18, 2) not null,
 	FUE_ENTREGADO bit not null,
@@ -496,7 +496,7 @@ ALTER TABLE BASE_DE_GATOS_2.BI_hechos_envio_mensajeria
 	CONSTRAINT FK_HECHOS_EM_TIEMPO FOREIGN KEY (TIEMPO_ID) REFERENCES BASE_DE_GATOS_2.BI_dimension_tiempo (ID),
 	CONSTRAINT FK_HECHOS_EM_TIPO_PAQUETE FOREIGN KEY (TIPO_PAQUETE_ID) REFERENCES BASE_DE_GATOS_2.BI_dimension_tipo_paquete (ID);
 	
-ALTER TABLE BASE_DE_GATOS_2.BI_hechos_pedidos
+ALTER TABLE BASE_DE_GATOS_2.BI_hechos_pedido
 	ADD CONSTRAINT FK_HECHOS_PEDIDOS_LOCALIDAD FOREIGN KEY (LOCALIDAD_ID) REFERENCES BASE_DE_GATOS_2.BI_dimension_provincia_localidad (ID),
 	CONSTRAINT FK_HECHOS_PEDIDOS_CATEGORIA_LOCAL FOREIGN KEY (CATEGORIA_LOCAL_ID) REFERENCES BASE_DE_GATOS_2.BI_dimension_tipo_local (ID), 
 	CONSTRAINT FK_HECHOS_PEDIDOS_TIEMPO FOREIGN KEY (TIEMPO_ID) REFERENCES BASE_DE_GATOS_2.BI_dimension_tiempo (ID),
@@ -679,7 +679,7 @@ GO
 CREATE PROCEDURE BASE_DE_GATOS_2.BI_migrar_hechos_pedidos
 	AS 
 		BEGIN
-			INSERT INTO BASE_DE_GATOS_2.BI_hechos_pedidos (
+			INSERT INTO BASE_DE_GATOS_2.BI_hechos_pedido (
 				CANTIDAD,         
 				SUMATORIA_MONTO_TOTAL,
 				FUE_ENTREGADO,
@@ -783,7 +783,7 @@ AS
 				ORDER BY SUM(hp.CANTIDAD) DESC
 			) AS RN
 		FROM 
-			BASE_DE_GATOS_2.BI_hechos_pedidos hp
+			BASE_DE_GATOS_2.BI_hechos_pedido hp
 				JOIN BASE_DE_GATOS_2.BI_dimension_dia_semana dd ON dd.ID = hp.DIA_ID
 				JOIN BASE_DE_GATOS_2.BI_dimension_rango_horario drh ON drh.ID = hp.RANGO_HORARIO_ID
 				JOIN BASE_DE_GATOS_2.BI_dimension_provincia_localidad dpl ON dpl.ID = hp.LOCALIDAD_ID
@@ -821,7 +821,7 @@ AS
 		dd.DIA,
 		drh.RANGO rango_horario
 	FROM
-		BASE_DE_GATOS_2.BI_hechos_pedidos hp
+		BASE_DE_GATOS_2.BI_hechos_pedido hp
 			JOIN BASE_DE_GATOS_2.BI_dimension_local dl ON dl.ID = hp.LOCAL_ID
 			JOIN BASE_DE_GATOS_2.BI_dimension_dia_semana dd ON dd.ID = hp.DIA_ID
 			JOIN BASE_DE_GATOS_2.BI_dimension_rango_horario drh ON drh.ID = hp.RANGO_HORARIO_ID
@@ -842,7 +842,7 @@ AS
 		dpl.LOCALIDAD localidad,
 		dpl.PROVINCIA provincia
 	FROM
-		BASE_DE_GATOS_2.BI_hechos_pedidos hp
+		BASE_DE_GATOS_2.BI_hechos_pedido hp
 			JOIN BASE_DE_GATOS_2.BI_dimension_tiempo dt ON dt.ID = hp.TIEMPO_ID
 			JOIN BASE_DE_GATOS_2.BI_dimension_provincia_localidad dpl ON dpl.ID = hp.LOCALIDAD_ID
 	GROUP BY
@@ -862,7 +862,7 @@ CREATE VIEW BASE_DE_GATOS_2.BI_VIEW_PROMEDIO_DESVIO_TIEMPO_ENTREGA_X_TIPO_MOVILI
 			dtm.TIPO_MOVILIDAD AS tipo_movilidad,
 			SUM(hp.SUMATORIA_DESVIOS_TIEMPO_ENVIO) AS sumatoria_desvio
 		FROM
-			BASE_DE_GATOS_2.BI_hechos_pedidos hp
+			BASE_DE_GATOS_2.BI_hechos_pedido hp
 				JOIN BASE_DE_GATOS_2.BI_dimension_dia_semana dd ON dd.ID = hp.TIEMPO_ID
 				JOIN BASE_DE_GATOS_2.BI_dimension_rango_horario drh ON drh.ID = hp.RANGO_HORARIO_ID
 				JOIN BASE_DE_GATOS_2.BI_dimension_tipo_movilidad dtm ON dtm.ID = hp.TIPO_MOVILIDAD_ID
@@ -907,7 +907,7 @@ AS
 		dt.ANIO,
 		dre.RANGO rango_etario_usuario
 	FROM
-		BASE_DE_GATOS_2.BI_hechos_pedidos hp
+		BASE_DE_GATOS_2.BI_hechos_pedido hp
 			JOIN BASE_DE_GATOS_2.BI_dimension_tiempo dt ON dt.ID = hp.TIEMPO_ID
 			JOIN BASE_DE_GATOS_2.BI_dimension_rango_etario dre ON dre.ID = hp.RANGO_ETARIO_USUARIO_ID
 	GROUP BY 
@@ -925,7 +925,7 @@ AS
 		dt.ANIO,
 		dl.NOMBRE_LOCAL
 	FROM
-		BASE_DE_GATOS_2.BI_hechos_pedidos hp
+		BASE_DE_GATOS_2.BI_hechos_pedido hp
 			JOIN BASE_DE_GATOS_2.BI_dimension_tiempo dt ON dt.ID = hp.TIEMPO_ID
 			JOIN BASE_DE_GATOS_2.BI_dimension_local dl ON dl.ID = hp.LOCAL_ID
 	GROUP BY 
@@ -952,7 +952,7 @@ AS
 						dpl.LOCALIDAD localidad,
 						COUNT(*) total_entregados
 				FROM
-						BASE_DE_GATOS_2.BI_hechos_pedidos hp
+						BASE_DE_GATOS_2.BI_hechos_pedido hp
 				JOIN BASE_DE_GATOS_2.BI_dimension_tiempo dt ON dt.ID = hp.TIEMPO_ID
 				JOIN BASE_DE_GATOS_2.BI_dimension_provincia_localidad dpl ON dpl.ID = hp.LOCALIDAD_ID
 				WHERE hp.FUE_ENTREGADO = 1
@@ -990,7 +990,7 @@ AS
 					drer.RANGO rango_etario_repartidor,
 					COUNT(*) entregados
 				FROM
-					BASE_DE_GATOS_2.BI_hechos_pedidos hp
+					BASE_DE_GATOS_2.BI_hechos_pedido hp
 						JOIN BASE_DE_GATOS_2.BI_dimension_tiempo dt ON dt.ID = hp.TIEMPO_ID
 						JOIN BASE_DE_GATOS_2.BI_dimension_rango_etario drer ON drer.ID = hp.RANGO_ETARIO_REPARTIDOR_ID
 						JOIN BASE_DE_GATOS_2.BI_dimension_provincia_localidad dpl ON dpl.ID = hp.LOCALIDAD_ID
