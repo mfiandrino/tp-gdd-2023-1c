@@ -940,10 +940,6 @@ GO
 -- Porcentaje de pedidos y mensajería entregados mensualmente según el rango etario de los repartidores y la localidad.
 -- (Este indicador se debe tener en cuenta y sumar tanto los envíos de pedidos como los de mensajería.
 -- El porcentaje se calcula en función del total general de pedidos y envíos mensuales entregados.)
-
--- 1: SUMAR TOTALIDAD DE PEDIDOS + ENVIOS
--- 2: SUMAR TOTALIDAD DE PEDIDOS + ENVIOS ENTREGADOS
--- 3: HACER DIVISION DE 2 / 1 Y MULTIPLICAR POR 100 (SACAR PORCENTAJE)
 CREATE VIEW BASE_DE_GATOS_2.BI_VIEW_PORCENTAJE_ENVIOS_X_RANGO_ETARIO_REPARTIDORES_X_MES_X_LOCALIDAD
 AS
 	WITH cantidad_total_pedidos_envios AS (
